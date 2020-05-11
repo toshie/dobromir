@@ -1,0 +1,11 @@
+*.o
+*.swp
+*.d
+*.hex
+*.eep
+*.lss
+*.lst
+*.map
+*.sym
+tags
+*.elf

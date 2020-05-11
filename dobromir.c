@@ -13,8 +13,8 @@
 #define TRUE 1
 #define FALSE 0
 
-static uint8_t report[3] = {0};
-static uint8_t report_out[3] = {0};
+static uint8_t report[4] = {0};
+static uint8_t report_out[4] = {0};
 
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- USB interface ----------------------------- */
@@ -28,20 +28,29 @@ PROGMEM const char usbHidReportDescriptor [USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH]
 	0xa1, 0x00,     //   COLLECTION (Physical)
 	0x09, 0x30,     //     USAGE (X)
 	0x09, 0x31,     //     USAGE (Y)
-	0x15, 0x81,     //   LOGICAL_MINIMUM (-127)
-	0x25, 0x7f,     //   LOGICAL_MAXIMUM (127)
+	0x15, 0x81,     //     LOGICAL_MINIMUM (-127)
+	0x25, 0x7f,     //     LOGICAL_MAXIMUM (127)
+	0x75, 0x08,     //     REPORT_SIZE (8)
+	0x95, 0x02,     //     REPORT_COUNT (2)
+	0x81, 0x02,     //     INPUT (Data,Var,Abs)
+	0xc0,           //   END_COLLECTION
+
+	0x09, 0x32,     //   USAGE (Z)
+	0x15, 0x00,     //   LOGICAL_MINIMUM (0)
+	0x25, 0xff,     //   LOGICAL_MAXIMUM (255)
 	0x75, 0x08,     //   REPORT_SIZE (8)
-	0x95, 0x02,     //   REPORT_COUNT (2)
+	0x95, 0x01,     //   REPORT_COUNT (1)
 	0x81, 0x02,     //   INPUT (Data,Var,Abs)
-	0xc0,           // END_COLLECTION
-	0x05, 0x09,     // USAGE_PAGE (Button)
+
+
+	0x05, 0x09,     //   USAGE_PAGE (Button)
 	0x19, 0x01,     //   USAGE_MINIMUM (Button 1)
 	0x29, 0x08,     //   USAGE_MAXIMUM (Button 8)
 	0x15, 0x00,     //   LOGICAL_MINIMUM (0)
 	0x25, 0x01,     //   LOGICAL_MAXIMUM (1)
-	0x75, 0x01,     // REPORT_SIZE (1)
-	0x95, 0x08,     // REPORT_COUNT (8)
-	0x81, 0x02,     // INPUT (Data,Var,Abs)
+	0x75, 0x01,     //   REPORT_SIZE (1)
+	0x95, 0x08,     //   REPORT_COUNT (8)
+	0x81, 0x02,     //   INPUT (Data,Var,Abs)
 	0xc0            // END_COLLECTION
 };
 
@@ -102,23 +111,35 @@ inline uint8_t getInputVal(uint8_t ddr, uint8_t pin)
 
 static void readInputs(void)
 {
-	report[0] = 66;
+	uint8_t prevButtons = report[3];
+
+	// joystick
+	report[0] = 128;
 	report[1] = 66;
+
+	// axis z
+//	report[2] = 100;
 	
-	report[2] = 0;
+	// buttons
+	report[3] = 0;
 	
 	PORTC &= ~_BV(SHIFT_LOAD);
 	PORTC |= _BV(SHIFT_LOAD);
-	
-	
+		
 	for (int i = 0; i <= 7; i++)
 	{
 		PORTC |= _BV(SHIFT_CLOCK);
 		if (PINC & _BV(SHIFT_OUTPUT))
-			report[2] |= 1 << i;
+			report[3] |= 1 << i;
 			
 		PORTC &= ~_BV(SHIFT_CLOCK);
 	}
+
+	if (report[3] != prevButtons)
+	{
+		report[2] += 20;
+	}
+
 	//report[2] = getInputVal(DDRC, PINC);
 	/*
 	if (isInputEnabled(PINC, BUTTON))
@@ -154,13 +175,13 @@ int main(void)
     //odDebugInit();
     //DBG1(0x00, 0, 0);       /* debug output: main starts */
     usbInit();
-    //usbDeviceDisconnect();  /* enforce re-enumeration, do this while interrupts are disabled! */
-    //i = 0;
-    //while(--i){             /* fake USB disconnect for > 250 ms */
+    usbDeviceDisconnect();  /* enforce re-enumeration, do this while interrupts are disabled! */
+    int i = 500;
+    while(--i){             /* fake USB disconnect for > 250 ms */
       //  wdt_reset();
-        //_delay_ms(1);
-    //}
-    //usbDeviceConnect();
+        _delay_ms(1);
+    }
+    usbDeviceConnect();
     //LED_PORT_DDR |= _BV(LED_BIT);   /* make the LED bit an output */
     sei();
     //DBG1(0x01, 0, 0);       /* debug output: main loop starts */

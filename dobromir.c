@@ -22,8 +22,9 @@ static uint8_t report_out[4] = {0};
 
 PROGMEM const char usbHidReportDescriptor [USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH] = {
 	0x05, 0x01,     // USAGE_PAGE (Generic Desktop)
-	0x09, 0x05,     // USAGE (Game Pad)
+	0x09, 0x05,     // USAGE (Game pad)
 	0xa1, 0x01,     // COLLECTION (Application)
+//	0x85, 0x01,     //   REPORT_ID (1)
 	0x09, 0x01,     //   USAGE (Pointer)
 	0xa1, 0x00,     //   COLLECTION (Physical)
 	0x09, 0x30,     //     USAGE (X)
@@ -51,8 +52,16 @@ PROGMEM const char usbHidReportDescriptor [USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH]
 	0x75, 0x01,     //   REPORT_SIZE (1)
 	0x95, 0x08,     //   REPORT_COUNT (8)
 	0x81, 0x02,     //   INPUT (Data,Var,Abs)
-	0xc0            // END_COLLECTION
+	
+	0x09, 0x21,     //   USAGE (Output Report Data)
+	0x75, 0x08,     //   REPORT SIZE (8)
+	0x95, 0x14,     //   REPORT COUNT (20)
+	0x91, 0x02,     //   OUTPUT (Data,Var,Abs)
+	
+	0xc0            // END_COLLECTION	
 };
+
+volatile uint8_t tmp = 1;
 
 usbMsgLen_t usbFunctionSetup(uchar data[8])
 {
@@ -66,12 +75,22 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
 	case USBRQ_HID_GET_REPORT: // HID joystick only has to handle this
 		usbMsgPtr = (usbMsgPtr_t) report_out;
 		return sizeof report_out;
+//		return USB_NO_MSG;
 	
-	//case USBRQ_HID_SET_REPORT: // LEDs on joystick?
+	case USBRQ_HID_SET_REPORT: // LEDs on joystick?
+//	case 99:
+		tmp = !tmp;
+		// return 1;
+		return USB_NO_MSG;
 	
 	default:
 		return 0;
 	}
+}
+
+uchar usbFunctionWrite(uchar* data, uchar len)
+{
+	return 1;
 }
 
 #define SHIFT_CLOCK PC5
@@ -111,6 +130,7 @@ inline uint8_t getInputVal(uint8_t ddr, uint8_t pin)
 
 static void readInputs(void)
 {
+//	report[0] = 1;
 	uint8_t prevButtons = report[3];
 
 	// joystick
@@ -202,13 +222,16 @@ int main(void)
 		
 		if (usbInterruptIsReady())
 		{
+
+		//	PORTB ^= _BV(POWER_LED);
 			readInputs();
 			if (memcmp(report_out, report, sizeof report ) != 0)
 			// if (1)
 			{
 				memcpy( report_out, report, sizeof report );
 				usbSetInterrupt( report_out, sizeof report_out );
-				PORTB ^= _BV(POWER_LED);
+				if (tmp)
+					PORTB ^= _BV(POWER_LED);
 			}
 		}
         // wdt_reset();

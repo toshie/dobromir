@@ -9,3 +9,4 @@
 *.sym
 tags
 *.elf
+compile_commands.json

@@ -176,9 +176,11 @@ static void readInputs(void)
 
 /* ------------------------------------------------------------------------- */
 
+
 int main(void)
 {
 //uchar   i;
+
 
     // wdt_enable(WDTO_1S);
 	

@@ -1,0 +1,3 @@
+[submodule "lib/dobromir_proto"]
+	path = lib/dobromir_proto
+	url = git@github.com:toshie/dobromir_proto

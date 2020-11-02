@@ -80,7 +80,7 @@ OBJDIR = .
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = usbdrv/oddebug.c usbdrv/usbdrv.c $(TARGET).c
+SRC = lib/dobromir_proto/dobromir_proto.c usbdrv/oddebug.c usbdrv/usbdrv.c $(TARGET).c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)

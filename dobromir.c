@@ -13,8 +13,8 @@
 #define TRUE 1
 #define FALSE 0
 
-static uint8_t report[4] = {0};
-static uint8_t report_out[4] = {0};
+static uint8_t report[5] = {0};
+static uint8_t report_out[5] = {0};
 
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- USB interface ----------------------------- */
@@ -24,7 +24,7 @@ PROGMEM const char usbHidReportDescriptor [USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH]
   0x05, 0x01,     // USAGE_PAGE (Generic Desktop)
   0x09, 0x05,     // USAGE (Game pad)
   0xa1, 0x01,     // COLLECTION (Application)
-  0x85, 0x00,     //   REPORT_ID (0)
+  0x85, 0x01,     //   REPORT_ID (0)
   0x09, 0x01,     //   USAGE (Pointer)
   0xa1, 0x00,     //   COLLECTION (Physical)
   0x09, 0x30,     //     USAGE (X)
@@ -135,18 +135,18 @@ inline uint8_t getInputVal(uint8_t ddr, uint8_t pin)
 
 static void readInputs(void)
 {
-//  report[0] = 1;
-  uint8_t prevButtons = report[3];
+  report[0] = 1;
+  uint8_t prevButtons = report[4];
 
   // joystick
-  report[0] = 128;
-  report[1] = 66;
+  report[1] = 128;
+  report[2] = 66;
 
   // axis z
 //  report[2] = 100;
   
   // buttons
-  report[3] = 0;
+  report[4] = 0;
   
   PORTC &= ~_BV(SHIFT_LOAD);
   PORTC |= _BV(SHIFT_LOAD);
@@ -155,14 +155,14 @@ static void readInputs(void)
   {
     PORTC |= _BV(SHIFT_CLOCK);
     if (PINC & _BV(SHIFT_OUTPUT))
-      report[3] |= 1 << i;
+      report[4] |= 1 << i;
       
     PORTC &= ~_BV(SHIFT_CLOCK);
   }
 
-  if (report[3] != prevButtons)
+  if (report[4] != prevButtons)
   {
-    report[2] += 20;
+    report[3] += 20;
   }
 
   //report[2] = getInputVal(DDRC, PINC);

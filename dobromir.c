@@ -98,9 +98,15 @@ uchar usbFunctionWrite(uchar* data, uchar len)
   return 1;
 }
 
-#define SHIFT_CLOCK PC5
-#define SHIFT_OUTPUT PC4
-#define SHIFT_LOAD PC3
+#define SHIFT_DDR DDRD
+#define SHIFT_PORT PORTD
+#define SHIFT_PIN PIND
+#define SHIFT_CLOCK PD0
+#define SHIFT_OUTPUT PD7
+#define SHIFT_LOAD PD1
+//#define SHIFT_CLOCK PC5
+//#define SHIFT_OUTPUT PC4
+//#define SHIFT_LOAD PC3
 #define BUTTON PC2
 #define BUTTON_LED PC1
 #define POWER_LED PB0
@@ -108,18 +114,23 @@ uchar usbFunctionWrite(uchar* data, uchar len)
 void setupInputs(void)
 {
   DDRC = 0; // all inputs
-  DDRC |= _BV(SHIFT_CLOCK);
-  DDRC |= _BV(SHIFT_LOAD);
-  DDRC |= _BV(BUTTON_LED);
+  DDRD = 0;
+
+  SHIFT_DDR |= _BV(SHIFT_CLOCK);
+  SHIFT_DDR |= _BV(SHIFT_LOAD);
+  SHIFT_DDR |= _BV(BUTTON_LED);
   DDRB |= _BV(POWER_LED);
   
   // PORTC |= _BV(BUTTON);
   //PORTC = 0;
   PORTC = 0xFF;
-  PORTC &= ~_BV(SHIFT_CLOCK);
+  PORTD = 0xFF;
+
+  SHIFT_PORT &= ~_BV(SHIFT_CLOCK);
   PORTC ^= _BV(BUTTON_LED);
   
   PORTB |= _BV(POWER_LED);
+
 }
 
 inline BOOL isInputEnabled(uint8_t reg, uint8_t inputNb)
@@ -148,16 +159,16 @@ static void readInputs(void)
   // buttons
   report[4] = 0;
   
-  PORTC &= ~_BV(SHIFT_LOAD);
-  PORTC |= _BV(SHIFT_LOAD);
+  SHIFT_PORT &= ~_BV(SHIFT_LOAD);
+  SHIFT_PORT |= _BV(SHIFT_LOAD);
     
   for (int i = 0; i <= 7; i++)
   {
-    PORTC |= _BV(SHIFT_CLOCK);
-    if (PINC & _BV(SHIFT_OUTPUT))
+    SHIFT_PORT |= _BV(SHIFT_CLOCK);
+    if (SHIFT_PIN & _BV(SHIFT_OUTPUT))
       report[4] |= 1 << i;
       
-    PORTC &= ~_BV(SHIFT_CLOCK);
+    SHIFT_PORT &= ~_BV(SHIFT_CLOCK);
   }
 
   if (report[4] != prevButtons)
@@ -237,8 +248,8 @@ int main(void)
       {
         memcpy( report_out, report, sizeof report );
         usbSetInterrupt( report_out, sizeof report_out );
-        if (tmp)
-          PORTB ^= _BV(POWER_LED);
+        // if (tmp)
+        //  PORTB ^= _BV(POWER_LED);
       }
     }
         // wdt_reset();
